@@ -7,6 +7,15 @@ from Crypto.Cipher import DES3
 # Based on
 # https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.1.0/com.ibm.zos.v2r1.csfb400/csfb4za2598.htm
 
+def histogram(pvv_pins):
+    h = {}
+    for k, v in pvv_pins.items():
+        try:
+            h[len(v)] += 1
+        except KeyError:
+            h[len(v)] = 1
+    return sorted(h.items(), key=lambda x: x[0])
+
 def extract_pvv(hexstring):
     pvv = ''
    
@@ -49,6 +58,7 @@ def main():
 
             # Transformed Security Parameter 11 + 1 + 4
             tsp = unhexlify(pan[-12:-1] + pvki + pin)
+
             encipherment_result = pgkl.encrypt(pgkr.decrypt((pgkl.encrypt(tsp))))
             hexstring = hexlify(encipherment_result).upper()
             pvv = extract_pvv(hexstring)
@@ -60,6 +70,7 @@ def main():
 
         top_collision = sorted(pvv_pins.items(), key=lambda x: len(x[1]), reverse=True)[0]
         print 'PAN %s has %d unique PVVs; PINs %r => PVV %r' % (pan, len(pvv_pins), top_collision[1], top_collision[0])
+        print '\tPVV Histogram: { %s }' % (', '.join(['%s: %s' % (k, v) for k, v in histogram(pvv_pins)]))
 #        if len(top_collision[1]) > 8: break
 
 if __name__ == '__main__':
